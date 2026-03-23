@@ -1,0 +1,22 @@
+import requests
+import json
+
+payload = {
+    "venue": "Test",
+    "facility": "Test Facility",
+    "date": "2026-10-10",
+    "startTime": "10:00",
+    "endTime": "11:00",
+    "purpose": "Test",
+    "requestor": "Test",
+    "email": "test@test.com",
+    "phoneNumber": "1234",
+    "selectedEquipment": []
+}
+
+try:
+    response = requests.post("http://localhost:8000/bookings/", json=payload)
+    print("Status:", response.status_code)
+    print("Response:", response.text)
+except Exception as e:
+    print("Error:", e)
