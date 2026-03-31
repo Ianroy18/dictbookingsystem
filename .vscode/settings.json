@@ -1,0 +1,8 @@
+{
+    "files.exclude": {
+        "http://localhost:3001/react-vite-supreme": true
+    },
+    "search.exclude": {
+        "http://localhost:3001/react-vite-supreme": true
+    }
+}

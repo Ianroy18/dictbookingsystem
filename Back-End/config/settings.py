@@ -30,6 +30,7 @@ SECRET_KEY = 'django-insecure-^43&o!2c9yh)ewvg+ryjp4j5jap3b@i!55gjyq(4l-(l5s33#)
 DEBUG = True
 
 ALLOWED_HOSTS = [
+    '*',
     '192.168.1.7',
     '127.0.0.1',
     'localhost',
@@ -38,7 +39,6 @@ ALLOWED_HOSTS = [
     'iannico322.github.io',
     'Zero322.pythonanywhere.com',
     '192.168.68.144'
-  
 ]
 
 #python manage.py 0.0.0.0:8000
