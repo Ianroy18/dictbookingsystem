@@ -166,7 +166,7 @@ export default function Dashboard({ bookings, setView, offices = [], setPrefille
     };
 
     return (
-        <div className="p-8 bg-slate-50 min-h-full">
+        <div className="p-8 bg-slate-50 dark:bg-slate-950 min-h-full">
             <div className="max-w-6xl mx-auto">
                 <header className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
                     <div>

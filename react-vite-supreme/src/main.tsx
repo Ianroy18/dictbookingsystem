@@ -21,6 +21,7 @@ const Page2 = lazy(() =>
 const Login = lazy(() => import("./screens/shared/Login.tsx"));
 const Register = lazy(() => import("./screens/auth/Register.tsx"));
 const RequestorDashboard = lazy(() => import("./screens/requestor/Dashboard.tsx"));
+import RequestorNavbar from "./screens/requestor/RequestorNavbar.tsx";
 
 // ── Admin pages ───────────────────────────────────────────────────────────
 import Sidebar from "./screens/shared/Sidebar.tsx";
@@ -38,6 +39,7 @@ const AdminOffices        = lazy(() => import("./screens/admin/OfficeManagement.
 const AdminTemplates      = lazy(() => import("./screens/admin/Templates.tsx"));
 const AdminReports        = lazy(() => import("./screens/admin/Reports.tsx"));
 const TrackRequests       = lazy(() => import("./screens/requestor/TrackRequests.tsx"));
+const NewBooking          = lazy(() => import("./screens/requestor/NewBooking.tsx"));
 
 // Legacy route kept for old links
 const LegacyDashboard = lazy(() => import("./screens/Dashboard.tsx"));
@@ -64,6 +66,17 @@ const AdminLayoutWrapper = () => {
   );
 };
 
+const RequestorLayoutWrapper = () => {
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-['Inter',_sans-serif]">
+      <RequestorNavbar />
+      <main className="flex-1">
+        <Outlet />
+      </main>
+    </div>
+  );
+};
+
 const AdminRoute = ({ component: Component, ...rest }: any) => {
     const currentUser = getUser();
     const { bookings, offices, handleUpdateStatus, handleDeleteBooking } = useApp() || { bookings: [], offices: [] };
@@ -84,14 +97,36 @@ const RoleBasedDashboard = ({ currentUser, bookings, offices, ...rest }: any) =>
 };
 
 const router = createBrowserRouter([
-  // ── Main / Root route ─────────────────────────────────
+  // ── Requestor pages (with navbar) ─────────────────────
   {
     path: "/",
-    element: (
-      <Suspense fallback={<Loader />}>
-        <RootRoute component={RequestorDashboard} setView={() => {}} />
-      </Suspense>
-    ),
+    element: <RequestorLayoutWrapper />,
+    children: [
+      {
+        index: true,
+        element: (
+          <Suspense fallback={<Loader />}>
+            <RootRoute component={RequestorDashboard} setView={(view: string) => { if (view === 'new-booking') window.location.href = '/new-booking'; }} />
+          </Suspense>
+        ),
+      },
+      {
+        path: "track-requests",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <RootRoute component={TrackRequests} />
+          </Suspense>
+        ),
+      },
+      {
+        path: "new-booking",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <RootRoute component={NewBooking} onCancel={() => window.history.back()} onAdd={(entry: any) => { console.log('Booking added', entry); window.location.href = '/track-requests'; }} />
+          </Suspense>
+        ),
+      },
+    ],
   },
 
   // ── Auth pages (no navbar) ────────────────────────────
@@ -262,12 +297,20 @@ function wait(time: number) {
   });
 }
 
+import { ModeToggle } from './components/mode-toggle.tsx';
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <AuthProvider>
         <AppProvider>
-          <RouterProvider router={router} />
+          <div className="relative min-h-screen">
+            <RouterProvider router={router} />
+            {/* Persistent floating theme switcher */}
+            <div className="fixed bottom-6 right-6 z-[100] shadow-2xl rounded-full overflow-hidden hover:scale-110 active:scale-95 transition-all">
+              <ModeToggle />
+            </div>
+          </div>
         </AppProvider>
       </AuthProvider>
     </ThemeProvider>

@@ -97,21 +97,21 @@ export default function TrackRequests({ bookings, onUpdateStatus, onDeleteBookin
     };
 
     return (
-        <div className="p-8 max-w-6xl mx-auto space-y-8">
+        <div className="p-8 max-w-6xl mx-auto space-y-8 bg-slate-50 dark:bg-slate-950 min-h-full">
             <header className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Track Your Requests</h2>
-                    <p className="text-slate-500 mt-1">View the status of your facility bookings.</p>
+                    <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Track Your Requests</h2>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">View the status of your facility bookings.</p>
                 </div>
             </header>
 
-            <div className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+            <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                 <div className="flex gap-2">
                     {['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'].map(f => (
                         <button
                             key={f}
                             onClick={() => { setFilter(f); setSelectedIds([]); }}
-                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === f ? 'bg-blue-600 text-white shadow-md' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === f ? 'bg-blue-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                                 }`}
                         >
                             {f}
@@ -128,9 +128,9 @@ export default function TrackRequests({ bookings, onUpdateStatus, onDeleteBookin
                 )}
             </div>
 
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                 <table className="w-full text-left">
-                    <thead className="bg-slate-50 border-b border-slate-100">
+                    <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700">
                         <tr>
                             <th className="p-4 w-12 text-center">
                                 <input 
@@ -140,17 +140,17 @@ export default function TrackRequests({ bookings, onUpdateStatus, onDeleteBookin
                                     onChange={toggleSelectAll}
                                 />
                             </th>
-                            <th className="p-4 text-xs font-bold text-slate-500 uppercase">Venue</th>
-                            <th className="p-4 text-xs font-bold text-slate-500 uppercase">Date</th>
-                            <th className="p-4 text-xs font-bold text-slate-500 uppercase">Time</th>
-                            <th className="p-4 text-xs font-bold text-slate-500 uppercase">Status</th>
-                            <th className="p-4 text-xs font-bold text-slate-500 uppercase">Actions</th>
+                            <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Venue</th>
+                            <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Date</th>
+                            <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Time</th>
+                            <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Status</th>
+                            <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                         {filteredBookings.length > 0 ? (
                             filteredBookings.map((b) => (
-                                <tr key={b.id} className={`transition-colors ${selectedIds.includes(b.id) ? 'bg-blue-50/50' : 'hover:bg-slate-50'}`}>
+                                <tr key={b.id} className={`transition-colors ${selectedIds.includes(b.id) ? 'bg-blue-50/50 dark:bg-blue-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}>
                                     <td className="p-4 text-center">
                                         <input 
                                             type="checkbox" 
@@ -160,11 +160,11 @@ export default function TrackRequests({ bookings, onUpdateStatus, onDeleteBookin
                                         />
                                     </td>
                                     <td className="p-4">
-                                        <p className="font-bold text-slate-800">{b.venue}</p>
-                                        <p className="text-xs text-slate-400">{b.purpose}</p>
+                                        <p className="font-bold text-slate-800 dark:text-white">{b.venue}</p>
+                                        <p className="text-xs text-slate-400 dark:text-slate-500">{b.purpose}</p>
                                     </td>
-                                    <td className="p-4 text-sm text-slate-600 font-medium">{b.date}</td>
-                                    <td className="p-4 text-sm text-slate-600 font-medium">{format12Hour(b.startTime)} - {format12Hour(b.endTime)}</td>
+                                    <td className="p-4 text-sm text-slate-600 dark:text-slate-300 font-medium">{b.date}</td>
+                                    <td className="p-4 text-sm text-slate-600 dark:text-slate-300 font-medium">{format12Hour(b.startTime)} - {format12Hour(b.endTime)}</td>
                                     <td className="p-4">
                                         <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${getStatusBadge(b.status)}`}>
                                             {b.status}
@@ -192,7 +192,7 @@ export default function TrackRequests({ bookings, onUpdateStatus, onDeleteBookin
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={5} className="p-12 text-center text-slate-400 italic">No bookings found.</td>
+                                <td colSpan={5} className="p-12 text-center text-slate-400 dark:text-slate-500 italic">No bookings found.</td>
                             </tr>
                         )}
                     </tbody>

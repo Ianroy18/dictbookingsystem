@@ -26,7 +26,6 @@ export default function Sidebar({ role = 'admin', notifCount = 0, currentUser }:
 
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: 'fas fa-th-large' },
-        { id: 'track-requests', label: 'All Bookings', icon: 'fas fa-calendar-check' },
     ];
 
     if (role === 'admin' || role === 'super-admin') {
