@@ -20,7 +20,7 @@ export default function NewBooking({ offices, bookings = [], prefilledData, onAd
         requestor: '',
         email: '',
         phoneNumber: '',
-        selectedEquipment: [], // Array of items with requestedQty
+        selectedEquipment: [], 
         attachmentName: '',
         attachment: null
     });

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Search, Plus, MoreHorizontal } from "lucide-react";
+import axios from "axios";
+import { Search, Plus, MoreHorizontal, User as UserIcon } from "lucide-react";
 import { TableSkeleton } from "./Skeleton";
 
 interface User {
@@ -31,12 +32,48 @@ const UserPage = () => {
   const [users, setUsers]       = useState<User[]>([]);
   const [search, setSearch]     = useState("");
 
-  useEffect(() => {
-    const t = setTimeout(() => {
+  const normalizeUser = (user: any): User => {
+    const name = user.name || `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() || user.email || "Unknown";
+    const status = user.status
+      ? user.status === "active" || user.status === "Active"
+        ? "Active"
+        : "Inactive"
+      : user.is_active
+      ? "Active"
+      : "Inactive";
+    const joinedDate = user.joined || user.date_joined || user.created_at || "";
+    const joined = joinedDate ? new Date(joinedDate).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }) : "Unknown";
+
+    return {
+      id: user.id,
+      name,
+      email: user.email || "n/a",
+      role: user.role || user.user_type || "User",
+      status,
+      joined,
+    };
+  };
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get("http://192.168.18.155:8000/users/");
+      const data = Array.isArray(res.data) ? res.data : [];
+      setUsers(data.map(normalizeUser));
+    } catch (error) {
+      console.error("Unable to load users from backend:", error);
       setUsers(MOCK_USERS);
+    } finally {
       setLoading(false);
-    }, 1200);
-    return () => clearTimeout(t);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
   }, []);
 
   const filtered = users.filter(
@@ -73,7 +110,9 @@ const UserPage = () => {
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           {/* Header */}
           <div className="grid grid-cols-[2fr_1fr_1fr_auto] gap-4 px-5 py-3 border-b border-border bg-muted/40 slg:grid-cols-[2fr_1fr_auto]">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">User</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+              <UserIcon className="w-3.5 h-3.5" /> User
+            </p>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide slg:hidden">Role</p>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</p>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Actions</p>

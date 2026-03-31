@@ -64,6 +64,13 @@ export default function RequestorNavbar() {
                         {/* Right side actions */}
                         <div className="flex items-center gap-3">
                             <button
+                                onClick={() => navigate('/track-requests')}
+                                className="flex items-center gap-3 px-5 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-2xl transition-all group"
+                            >
+                                <i className="fas fa-clipboard-list text-lg group-hover:text-blue-400 transition-colors"></i>
+                                <span className="font-black text-[10px] uppercase tracking-[0.15em]">Track Requests</span>
+                            </button>
+                            <button
                                 onClick={() => navigate('/bookings/login')}
                                 className="hidden lg:flex items-center gap-3 px-5 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-2xl transition-all group"
                             >

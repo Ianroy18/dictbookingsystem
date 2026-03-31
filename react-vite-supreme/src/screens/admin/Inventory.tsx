@@ -1,4 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
+import axios from 'axios';
+import { Plus, Edit3, Trash2, X, Tag, CheckCircle } from 'lucide-react';
 
 interface InventoryProps {
     currentUser: any;
@@ -16,8 +18,8 @@ export default function Inventory({ currentUser, offices = [] }: InventoryProps)
 
     const fetchItems = async () => {
         try {
-            const res = await fetch('http://192.168.18.155:8000/inventory/');
-            if (res.ok) setItems(await res.json());
+            const res = await axios.get('http://192.168.18.155:8000/inventory/');
+            setItems(res.data);
         } catch (e) { console.error("Fetch items error", e); }
     };
 
@@ -27,8 +29,13 @@ export default function Inventory({ currentUser, offices = [] }: InventoryProps)
         const method = editItem ? 'PATCH' : 'POST';
         const url = editItem ? `http://192.168.18.155:8000/inventory/${editItem.id}/` : 'http://192.168.18.155:8000/inventory/';
         try {
-            const resp = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
-            if (resp.ok) {
+            const resp = await axios({
+                method,
+                url,
+                headers: { 'Content-Type': 'application/json' },
+                data: formData
+            });
+            if (resp.status >= 200 && resp.status < 300) {
                 setFeedbackMessage(editItem ? 'Changes saved successfully' : 'Equipment added successfully');
                 setShowSuccess(true);
                 setShowModal(false); 
@@ -37,10 +44,9 @@ export default function Inventory({ currentUser, offices = [] }: InventoryProps)
                 await fetchItems();
                 setTimeout(() => setShowSuccess(false), 3000);
             } else {
-                const err = await resp.json();
-                alert("Error saving: " + (err.message || "Unknown error"));
+                alert("Error saving: " + (resp.statusText || "Unknown error"));
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error("Save Error", e);
             alert("Connection error.");
         } finally {
@@ -55,20 +61,19 @@ export default function Inventory({ currentUser, offices = [] }: InventoryProps)
             try {
                 const url = `http://192.168.18.155:8000/inventory/${item.id}/`;
                 console.log("DEBUG: Delete Request URL:", url);
-                const resp = await fetch(url, { method: 'DELETE' });
+                const resp = await axios.delete(url);
                 console.log("DEBUG: Delete Response Status:", resp.status);
                 
-                if (resp.ok) {
+                if (resp.status >= 200 && resp.status < 300) {
                     setFeedbackMessage('Equipment removed successfully');
                     setShowSuccess(true);
                     await fetchItems();
                     setTimeout(() => setShowSuccess(false), 3000);
                 } else {
-                    const errorMsg = await resp.text();
-                    console.error("DEBUG: Delete Failed:", errorMsg);
-                    alert(`Failed to delete: ${resp.status} - ${errorMsg}`);
+                    console.error("DEBUG: Delete Failed:", resp.statusText || resp.data);
+                    alert(`Failed to delete: ${resp.status} - ${resp.statusText}`);
                 }
-            } catch (e) {
+            } catch (e: any) {
                 console.error("Delete Network Error", e);
                 alert("Network error occurred while deleting.");
             } finally {
@@ -133,7 +138,7 @@ export default function Inventory({ currentUser, offices = [] }: InventoryProps)
             {showSuccess && (
                 <div className="fixed top-8 right-8 z-[110] animate-in slide-in-from-right-full duration-500">
                     <div className="bg-emerald-500 text-white px-8 py-4 rounded-2xl shadow-2xl shadow-emerald-200 dark:shadow-none flex items-center gap-3">
-                        <i className="fas fa-check-circle text-xl"></i>
+                        <CheckCircle className="w-5 h-5" />
                         <div>
                             <p className="font-black text-xs uppercase tracking-widest leading-none">Operation Successful</p>
                             <p className="text-[10px] opacity-80 font-bold mt-1 uppercase tracking-tighter">{feedbackMessage}</p>
@@ -149,7 +154,7 @@ export default function Inventory({ currentUser, offices = [] }: InventoryProps)
                 </div>
                 {canManage && (
                     <button onClick={() => { setEditItem(null); setFormData({ name: '', available: 0, venue: '' }); setShowModal(true); }} className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-blue-200 dark:shadow-none hover:shadow-blue-300 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3">
-                        <i className="fas fa-plus"></i> Add New Equipment
+                        <Plus className="w-4 h-4" /> Add New Equipment
                     </button>
                 )}
             </header>
@@ -167,14 +172,14 @@ export default function Inventory({ currentUser, offices = [] }: InventoryProps)
                                             className="text-blue-600 dark:text-blue-400 w-9 h-9 flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors shadow-sm"
                                             title="Edit Equipment"
                                         >
-                                            <i className="fas fa-edit"></i>
+                                            <Edit3 className="w-4 h-4" />
                                         </button>
                                         <button 
                                             onClick={() => handleDelete(item)} 
                                             className="text-rose-600 dark:text-rose-400 w-9 h-9 flex items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-900/30 border border-rose-100 dark:border-rose-800/50 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors shadow-sm"
                                             title="Delete Equipment"
                                         >
-                                            <i className="fas fa-trash-alt"></i>
+                                            <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
                                 )}
@@ -204,13 +209,13 @@ export default function Inventory({ currentUser, offices = [] }: InventoryProps)
                                 <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-0.5">Inventory Management</p>
                             </div>
                             <button onClick={() => setShowModal(false)} className="text-slate-300 dark:text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 transition-colors">
-                                <i className="fas fa-times-circle text-2xl"></i>
+                                <X className="w-6 h-6" />
                             </button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-8 space-y-6">
                             <div className="space-y-2">
                                 <label className="flex items-center text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">
-                                    <i className="fas fa-tag mr-2 text-blue-500"></i> Item Name
+                                    <Tag className="w-3.5 h-3.5 mr-2 text-blue-500" /> Item Name
                                 </label>
                                 <input 
                                     type="text" 
@@ -242,7 +247,7 @@ export default function Inventory({ currentUser, offices = [] }: InventoryProps)
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="flex items-center text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">
-                                        <i className="fas fa-sort-numeric-up mr-2 text-blue-500"></i> Quantity
+                                        <Plus className="w-3.5 h-3.5 mr-2 text-blue-500" /> Quantity
                                     </label>
                                     <input type="number" required min="0" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl outline-none focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/30 focus:border-blue-500 transition-all font-bold text-slate-900 dark:text-white" value={formData.available} onChange={(e) => setFormData({ ...formData, available: e.target.value })} />
                                 </div>
@@ -252,7 +257,7 @@ export default function Inventory({ currentUser, offices = [] }: InventoryProps)
                             </div>
                             <div className="space-y-2">
                                 <label className="flex items-center text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">
-                                    <i className="fas fa-building mr-2 text-blue-500"></i> Assign to Office
+                                    <Tag className="w-3.5 h-3.5 mr-2 text-blue-500" /> Assign to Office
                                 </label>
                                 <select required className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl outline-none focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/30 focus:border-blue-500 transition-all font-bold text-slate-900 dark:text-white appearance-none" value={formData.venue} onChange={(e) => setFormData({ ...formData, venue: e.target.value })}>
                                     <option value="" className="dark:bg-slate-800">Choose Office...</option>
@@ -264,7 +269,7 @@ export default function Inventory({ currentUser, offices = [] }: InventoryProps)
                              <div className="flex gap-4 pt-6">
                                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-4 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-black rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-all uppercase tracking-widest text-[10px]">Cancel</button>
                                 <button type="submit" className="flex-[2] bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-4 rounded-2xl font-black shadow-lg shadow-blue-200 dark:shadow-none group flex items-center justify-center gap-2 uppercase tracking-widest text-[10px] hover:scale-[1.02] active:scale-95 transition-all">
-                                    {editItem ? 'Save Changes' : 'Register Equipment'} <i className="fas fa-check-circle group-hover:scale-110 transition-transform"></i>
+                                    {editItem ? 'Save Changes' : 'Register Equipment'} <CheckCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
                                 </button>
                             </div>
                         </form>

@@ -18,6 +18,7 @@ export default function Dashboard({ bookings, setView, offices = [], setPrefille
     const [reqFacility, setReqFacility] = useState('All');
     const [selectedDateBookings, setSelectedDateBookings] = useState<{ date: string, bookings: any[] } | null>(null);
     const [selectedTimeRange, setSelectedTimeRange] = useState<{ start: string, end: string } | null>(null);
+    const [modalViewMode, setModalViewMode] = useState<'slots' | 'calendar'>('slots');
 
     useEffect(() => {
         const updateTime = () => {
@@ -138,6 +139,19 @@ export default function Dashboard({ bookings, setView, offices = [], setPrefille
         return slots;
     };
 
+    const generateTimelineRows = () => {
+        return Array.from({ length: 9 }, (_, idx) => {
+            const hour = 8 + idx;
+            const startStr = `${hour.toString().padStart(2, '0')}:00`;
+            const endStr = `${(hour + 1).toString().padStart(2, '0')}:00`;
+            return {
+                start: startStr,
+                end: endStr,
+                label: `${format12Hour(startStr)} - ${format12Hour(endStr)}`
+            };
+        });
+    };
+
     const isSlotOccupied = (slotStart: string, slotEnd: string, dayBookings: any[]) => {
         return dayBookings.some(b => {
             if (b.status === 'REJECTED' || b.status === 'CANCELLED') return false;
@@ -207,12 +221,7 @@ export default function Dashboard({ bookings, setView, offices = [], setPrefille
                                 <option key={r.id} value={r.name}>{r.name}</option>
                             ))}
                         </select>
-                        <button
-                            onClick={() => setView('new-booking')}
-                            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg hover:shadow-blue-200/50 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center"
-                        >
-                            <i className="fas fa-plus mr-2"></i> New Booking
-                        </button>
+                        
                     </div>
                 </header>
 
@@ -223,15 +232,17 @@ export default function Dashboard({ bookings, setView, offices = [], setPrefille
                                 <h3 className="text-lg font-extrabold text-slate-800 dark:text-white flex items-center uppercase tracking-tighter">
                                     <i className="fas fa-calendar-check mr-3 text-blue-500 text-2xl"></i> Availability Calendar
                                 </h3>
-                                <div className="flex items-center bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
-                                    <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-white dark:hover:bg-slate-600 rounded-md transition shadow-sm">
-                                        <i className="fas fa-chevron-left text-xs text-slate-600 dark:text-slate-300"></i>
+                                <div className="flex items-center bg-slate-100 dark:bg-slate-700 rounded-lg p-1 gap-2">
+                                    <button onClick={() => changeMonth(-1)} className="flex items-center gap-2 px-3 py-2 hover:bg-white dark:hover:bg-slate-600 rounded-md transition shadow-sm text-slate-600 dark:text-slate-300">
+                                        <i className="fas fa-chevron-left text-xs"></i>
+                                        <span className="text-[11px] uppercase tracking-[0.25em] font-bold">Prev</span>
                                     </button>
                                     <span className="px-4 font-bold text-xs text-slate-700 dark:text-slate-100 uppercase tracking-widest min-w-[140px] text-center">
                                         {new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentDate)}
                                     </span>
-                                    <button onClick={() => changeMonth(1)} className="p-2 hover:bg-white dark:hover:bg-slate-600 rounded-md transition shadow-sm">
-                                        <i className="fas fa-chevron-right text-xs text-slate-600 dark:text-slate-300"></i>
+                                    <button onClick={() => changeMonth(1)} className="flex items-center gap-2 px-3 py-2 hover:bg-white dark:hover:bg-slate-600 rounded-md transition shadow-sm text-slate-600 dark:text-slate-300">
+                                        <span className="text-[11px] uppercase tracking-[0.25em] font-bold">Next</span>
+                                        <i className="fas fa-chevron-right text-xs"></i>
                                     </button>
                                 </div>
                             </div>
@@ -304,39 +315,96 @@ export default function Dashboard({ bookings, setView, offices = [], setPrefille
                                 </button>
                             </div>
                             <div className="p-6 max-h-[60vh] overflow-y-auto space-y-6">
-                                <div>
-                                    <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-3">Time Slots</h4>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                        {generateTimeSlots().map((slot, idx) => {
-                                            const occupied = isSlotOccupied(slot.start, slot.end, selectedDateBookings.bookings);
-                                            
-                                            let isSelected = false;
-                                            if (selectedTimeRange) {
-                                                isSelected = slot.start >= selectedTimeRange.start && slot.end <= selectedTimeRange.end;
-                                            }
-
-                                            return (
-                                                <div 
-                                                    key={idx} 
-                                                    onClick={() => handleSlotClick(slot, occupied)}
-                                                    className={`p-3 rounded-xl border text-center text-xs font-bold transition-all ${
-                                                        occupied ? 'bg-rose-50 border-rose-100 text-rose-400 cursor-not-allowed opacity-60' :
-                                                        isSelected ? 'bg-blue-500 border-blue-600 text-white cursor-pointer shadow-md scale-105' :
-                                                        'bg-white border-slate-200 text-slate-600 cursor-pointer hover:border-blue-400 hover:bg-blue-50'
-                                                    }`}
-                                                >
-                                                    {slot.label}
-                                                    {occupied && <div className="text-[9px] uppercase tracking-widest mt-1">Occupied</div>}
-                                                    {!occupied && isSelected && <div className="text-[9px] uppercase tracking-widest mt-1 text-blue-100">Selected</div>}
-                                                </div>
-                                            );
-                                        })}
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-3">Booking View</h4>
+                                    <div className="flex items-center gap-2 rounded-2xl bg-slate-100 dark:bg-slate-900 p-1">
+                                        <button
+                                            onClick={() => setModalViewMode('slots')}
+                                            className={`px-3 py-2 text-xs font-bold rounded-2xl transition ${modalViewMode === 'slots' ? 'bg-blue-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'}`}
+                                        >
+                                            Time Slots
+                                        </button>
+                                        <button
+                                            onClick={() => setModalViewMode('calendar')}
+                                            className={`px-3 py-2 text-xs font-bold rounded-2xl transition ${modalViewMode === 'calendar' ? 'bg-blue-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'}`}
+                                        >
+                                            Google View
+                                        </button>
                                     </div>
-                                    <p className="text-[10px] text-slate-400 mt-3 flex items-center gap-2 italic">
-                                        <i className="fas fa-info-circle text-blue-400"></i>
-                                        Click multiple adjacent slots to increase duration.
-                                    </p>
                                 </div>
+
+                                {modalViewMode === 'slots' ? (
+                                    <div>
+                                        <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-3">Time Slots</h4>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                            {generateTimeSlots().map((slot, idx) => {
+                                                const occupied = isSlotOccupied(slot.start, slot.end, selectedDateBookings.bookings);
+                                                
+                                                let isSelected = false;
+                                                if (selectedTimeRange) {
+                                                    isSelected = slot.start >= selectedTimeRange.start && slot.end <= selectedTimeRange.end;
+                                                }
+
+                                                return (
+                                                    <div 
+                                                        key={idx} 
+                                                        onClick={() => handleSlotClick(slot, occupied)}
+                                                        className={`p-3 rounded-xl border text-center text-xs font-bold transition-all ${
+                                                            occupied ? 'bg-rose-50 border-rose-100 text-rose-400 cursor-not-allowed opacity-60' :
+                                                            isSelected ? 'bg-blue-500 border-blue-600 text-white cursor-pointer shadow-md scale-105' :
+                                                            'bg-white border-slate-200 text-slate-600 cursor-pointer hover:border-blue-400 hover:bg-blue-50'
+                                                        }`}
+                                                    >
+                                                        {slot.label}
+                                                        {occupied && <div className="text-[9px] uppercase tracking-widest mt-1">Occupied</div>}
+                                                        {!occupied && isSelected && <div className="text-[9px] uppercase tracking-widest mt-1 text-blue-100">Selected</div>}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        <p className="text-[10px] text-slate-400 mt-3 flex items-center gap-2 italic">
+                                            <i className="fas fa-info-circle text-blue-400"></i>
+                                            Click multiple adjacent slots to increase duration.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-3">Google Calendar Day View</h4>
+                                        <div className="grid grid-cols-[120px_1fr] gap-0 border border-slate-200 dark:border-slate-700 rounded-3xl overflow-hidden bg-white dark:bg-slate-900">
+                                            {generateTimelineRows().map((row, idx) => (
+                                                <div key={idx} className="border-b border-slate-200 dark:border-slate-700 p-3 text-[10px] text-slate-500 dark:text-slate-400 font-bold bg-slate-50 dark:bg-slate-950">
+                                                    {row.label}
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="mt-4 rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden">
+                                            {generateTimelineRows().map((row, idx) => {
+                                                const rowBookings = selectedDateBookings.bookings.filter((b: any) => b.startTime === row.start);
+                                                return (
+                                                    <div key={idx} className="grid grid-cols-[120px_1fr] gap-0 border-b border-slate-200 dark:border-slate-700 last:border-0">
+                                                        <div className="p-3 text-[10px] text-slate-500 dark:text-slate-400 font-bold bg-slate-50 dark:bg-slate-950">
+                                                            {row.label}
+                                                        </div>
+                                                        <div className="min-h-[72px] p-3 relative">
+                                                            {rowBookings.length > 0 ? (
+                                                                rowBookings.map((b: any, idx2: number) => (
+                                                                    <div key={idx2} className="mb-2 rounded-2xl border border-blue-200 bg-blue-100 dark:border-blue-900 dark:bg-blue-950/70 p-3 text-xs text-slate-900 dark:text-white shadow-sm">
+                                                                        <div className="font-bold text-[11px] uppercase tracking-[0.15em] text-blue-700 dark:text-blue-200">{b.venue}</div>
+                                                                        <div className="text-[11px] font-bold mt-1">{b.purpose}</div>
+                                                                        <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">{format12Hour(b.startTime)} - {format12Hour(b.endTime)}</div>
+                                                                        <div className={`text-[10px] uppercase tracking-[0.15em] mt-1 font-black ${b.status === 'APPROVED' ? 'text-emerald-700' : b.status === 'REJECTED' ? 'text-rose-700' : 'text-amber-700'}`}>{b.status}</div>
+                                                                    </div>
+                                                                ))
+                                                            ) : (
+                                                                <div className="h-full rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-[10px] text-slate-400 flex items-center justify-center">Available</div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {selectedDateBookings.bookings.length > 0 && (
                                     <div className="pt-4 border-t border-slate-100">

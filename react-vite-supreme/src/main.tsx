@@ -57,9 +57,9 @@ const AdminLayoutWrapper = () => {
   const currentUser = getUser();
   
   return (
-    <div className="flex bg-slate-50 min-h-screen relative font-['Inter',_sans-serif]">
+    <div className="flex bg-slate-50 dark:bg-slate-950 min-h-screen relative font-['Inter',_sans-serif] text-slate-900 dark:text-slate-100">
        <Sidebar role={currentUser.role} notifCount={0} currentUser={currentUser} />
-       <main className="flex-1 ml-80 transition-all duration-300">
+       <main className="flex-1 ml-80 transition-all duration-300 bg-slate-50 dark:bg-slate-950">
           <Outlet />
        </main>
     </div>
@@ -85,8 +85,8 @@ const AdminRoute = ({ component: Component, ...rest }: any) => {
 };
 
 const RootRoute = ({ component: Component, ...rest }: any) => {
-    const { bookings, offices, setBookings, sendNotifications } = useApp() || { bookings: [], offices: [] };
-    return <Component bookings={bookings} offices={offices} setBookings={setBookings} sendNotifications={sendNotifications} {...rest} />;
+    const { bookings, offices, setBookings } = useApp() || { bookings: [], offices: [] };
+    return <Component bookings={bookings} offices={offices} setBookings={setBookings} {...rest} />;
 };
 
 const RoleBasedDashboard = ({ currentUser, bookings, offices, ...rest }: any) => {
@@ -289,7 +289,7 @@ const router = createBrowserRouter([
       },
     ],
   },
-]);
+], { basename: import.meta.env.BASE_URL });
 
 function wait(time: number) {
   return new Promise((resolve) => {

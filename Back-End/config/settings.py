@@ -115,6 +115,8 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'itsyofficial69@gmail.com'
 EMAIL_HOST_PASSWORD = 'tmwwltyjlxiuudjx'
 EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+SERVER_EMAIL = EMAIL_HOST_USER
 
 
 # Password validation

@@ -11,21 +11,45 @@ interface TrackRequestsProps {
 
 export default function TrackRequests({ bookings, onUpdateStatus, onDeleteBooking, onBulkDeleteBookings, currentUser, offices = [] }: TrackRequestsProps) {
     const [filter, setFilter] = useState('ALL');
+    const [searchQuery, setSearchQuery] = useState('');
     const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
+
+    const normalize = (value?: string) => value?.toLowerCase().trim() || '';
+
+    const isBookingOwner = (booking: any) => {
+        if (!currentUser) return false;
+        const emailMatch = currentUser.email && booking.email && normalize(currentUser.email) === normalize(booking.email);
+        const requestorMatch = currentUser.requestor && booking.requestor && normalize(currentUser.requestor) === normalize(booking.requestor);
+        const nameMatch = currentUser.name && booking.requestor && normalize(currentUser.name) === normalize(booking.requestor);
+        return emailMatch || requestorMatch || nameMatch;
+    };
+
+    const matchesSearch = (booking: any) => {
+        const query = normalize(searchQuery);
+        if (!query) return true;
+        return [booking.venue, booking.email, booking.requestor]
+            .filter(Boolean)
+            .some((field: string) => normalize(field).includes(query));
+    };
+
+    const canCancelBooking = (booking: any) => {
+        if (booking.status !== 'PENDING') return false;
+        if (currentUser?.role?.toLowerCase().includes('super')) return true;
+        if (currentUser?.role === 'admin') return true;
+        return isBookingOwner(booking);
+    };
 
     const filteredBookings = bookings.filter(b => {
         if (filter !== 'ALL' && b.status !== filter) return false;
-        
-        // Handle Requestor: Only show their own bookings (assuming currentUser.id exists or we filter by requestor)
-        // Wait, previously there was no filter by currentUser for TrackRequests.
-        // Let's implement the area filtering for admin.
+        if (!matchesSearch(b)) return false;
+
         if (currentUser?.role?.toLowerCase().includes('super')) return true;
-        
+
         if (currentUser?.role === 'admin') {
             const isMatch = (s1?: string, s2?: string) => {
                 if (!s1 || !s2) return false;
-                const a = s1.toLowerCase().trim();
-                const b = s2.toLowerCase().trim();
+                const a = normalize(s1);
+                const b = normalize(s2);
                 return a.includes(b) || b.includes(a);
             };
 
@@ -50,9 +74,8 @@ export default function TrackRequests({ bookings, onUpdateStatus, onDeleteBookin
             
             return isAllowed;
         }
-        
-        // Requestor sees all bookings? Usually they see their own, but since there's no email filter for requestor in the original code, we'll leave it as is.
-        return true;
+
+        return isBookingOwner(b);
     });
 
     const getStatusBadge = (status: string) => {
@@ -105,8 +128,8 @@ export default function TrackRequests({ bookings, onUpdateStatus, onDeleteBookin
                 </div>
             </header>
 
-            <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                <div className="flex gap-2">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                <div className="flex flex-wrap gap-2">
                     {['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'].map(f => (
                         <button
                             key={f}
@@ -118,14 +141,23 @@ export default function TrackRequests({ bookings, onUpdateStatus, onDeleteBookin
                         </button>
                     ))}
                 </div>
-                {onBulkDeleteBookings && selectedIds.length > 0 && (
-                    <button 
-                        onClick={handleBulkDelete}
-                        className="bg-rose-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-rose-600 flex items-center gap-2 transition-all"
-                    >
-                        <i className="fas fa-trash-alt"></i> Delete Selected ({selectedIds.length})
-                    </button>
-                )}
+                <div className="flex flex-col gap-3 w-full lg:w-auto">
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search venue, email, or name"
+                        className="w-full lg:w-[320px] bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    />
+                    {onBulkDeleteBookings && selectedIds.length > 0 && (
+                        <button 
+                            onClick={handleBulkDelete}
+                            className="bg-rose-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-rose-600 flex items-center gap-2 transition-all"
+                        >
+                            <i className="fas fa-trash-alt"></i> Delete Selected ({selectedIds.length})
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
@@ -173,8 +205,12 @@ export default function TrackRequests({ bookings, onUpdateStatus, onDeleteBookin
                                     <td className="p-4 flex gap-4 items-center">
                                         {b.status === 'PENDING' && (
                                             <button
-                                                onClick={() => { if (window.confirm("Cancel this booking?")) onUpdateStatus(b.id, 'CANCELLED'); }}
-                                                className="text-amber-500 hover:text-amber-700 text-xs font-bold flex items-center gap-1"
+                                                onClick={() => {
+                                                    if (!canCancelBooking(b)) return;
+                                                    if (window.confirm("Cancel this booking?")) onUpdateStatus(b.id, 'CANCELLED');
+                                                }}
+                                                disabled={!canCancelBooking(b)}
+                                                className={`text-xs font-bold flex items-center gap-1 transition-colors ${canCancelBooking(b) ? 'text-amber-500 hover:text-amber-700' : 'text-slate-400 cursor-not-allowed opacity-60'}`}
                                             >
                                                 <i className="fas fa-ban"></i> Cancel
                                             </button>
